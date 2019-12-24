@@ -105,5 +105,3 @@ venv.bak/
 
 # self
 .idea/
-.git/
-__pycache__/
