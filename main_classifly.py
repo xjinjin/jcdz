@@ -3,6 +3,7 @@ import json
 import pickle
 
 import requests
+
 from sqlalchemy import create_engine, Column, Integer, String, LargeBinary
 from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.ext.declarative import declarative_base
@@ -13,8 +14,9 @@ true = ''
 false = ''
 SURL = "mysql+pymysql://cic_admin:TaBoq,,1234@192.168.1.170:3306/cicjust_splinter?charset=utf8&autocommit=true"
 engine = create_engine(SURL)  # 定义引擎
-Base = declarative_base()
-session = sessionmaker(engine)()
+Base = declarative_base()     # 基类，表都继承这个类
+
+session = sessionmaker(engine)()    # 操作数据库，数据库对话
 
 import logging
 
@@ -97,7 +99,7 @@ class JCDFLOWSAVE(Base):
     path = Column(String(100))
 
 
-Base.metadata.create_all(engine)
+Base.metadata.create_all(engine) # 创建所有Base派生类所对应的数据表。当启动代理时：此文件当成模块加载这行自动运行。
 # 中间人
 import mitmproxy.addonmanager
 import mitmproxy.connections
@@ -113,17 +115,21 @@ class Proxy():
     def save_data(self, request, response, now_time):
         '''存flow数据'''
         try:
-            result = JCDFLOWSAVE(now_time=now_time, request=request, response=response, path='')
-            session.add(result)
-            session.commit()
+            result = JCDFLOWSAVE(now_time=now_time, request=request, response=response, path='') # 创建对象，即表中一条记录
+            session.add(result)     # 对象存入数据库
+            session.commit()        # 所有的数据处理准备好之后，执行commit才会提交到数据库
             # session.close()
-        except:
-            session.rollback()
-            res = pickle.loads(response)
+        # except:
+        except Exception as e:
+            print(e)
+            session.rollback()              # 加入数据库commit提交失败，回滚
+            res = pickle.loads(response)    # 从字节对象中读取被封装的对象
             path = './{}.txt'.format(now_time)
-            fw = open(path, 'wb')
-            pickle.dump(res, fw)
-            fw.close()
+            # fw = open(path, 'wb')
+            # pickle.dump(res, fw)          # response对象写入文件
+            # fw.close()
+            with open(path,'wb') as fw:     # 将数据通过特殊的形式转换为只有python语言认识的字符串，并写入文件
+                pickle.dump(res, fw)
             result = JCDFLOWSAVE(now_time=now_time, request=request,path=path)
             session.add(result)
             session.commit()
@@ -171,8 +177,8 @@ class Proxy():
         '''拦截响应数据'''
         request = flow.request
         response = flow.response
-        now_time = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime(time.time()))
-        request = pickle.dumps(request)
+        now_time = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime(time.time())) # 2019_12_25_10_12_10 str
+        request = pickle.dumps(request)         # 以字节对象形式返回封装的对象
         response = pickle.dumps(response)
         self.save_data(request, response, now_time)
         # flow_res = str(pickle.dumps(flow))
