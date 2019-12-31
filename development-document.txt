@@ -4,28 +4,33 @@ jcdz开发文档
 资料：
 	192.168.1.240 /home/program/jcdz
 	
-	mitmdump.exe -s main_classifly.py
-	https://dz.jchl.com/#/edfx-app-root/edfx-app-portal/app-proof-of-charge
-	账号：18678815828密码：Aa111111
+	mitmdump.exe -s main_classifly.py -p 8081   # 默认8080
 
 简介：客户的数据从其他服务商导入到我们的总账系统。使用mitm正向代理模式。打包成docker
+	token:每个公司一个token，有时效性
+	数据库：
+		JCDFLOWSAVE:代理使用的库，所有的数据都入库
+		JCDZT：登陆时的库
+		JCDEXPORT：最终给阮工的数据库，各种要求的数据都存入这个库，根据标签区分不同的数据
 
-技术相关：
+启动：
+	mitmdump -s main_classifly.py  启动代理所有的request,response入库，单独一个程序。
+	python parse_data.py		   从数据库中读，解析数据
 
 git：本地连接到远程
-	git init 
+	git init
 	git add -A
 	git commit -m "first commit"
 	git remote add origin git@github.com:xjinjin/jcdz.git
 	git push -u origin master/git push
 
-	
+
 	特殊文件：
 	.gitignore  .idea/	.git/
 	readme.txt
-	requirements.txt		pip3.7 freeze >requirements.txt
-	
-CentOS7 安装Python3.7多版本共存		
+	requirements.txt		pip3.7 freeze > requirements.txt
+
+CentOS7 安装Python3.7多版本共存
 	1、安装依赖包
 	yum install libffi-devel openssl-devel bzip2-devel expat-devel gdbm-devel readline-devel sqlite-devel gcc
 
@@ -46,21 +51,21 @@ CentOS7 安装Python3.7多版本共存
 	ln -s /usr/local/python3.7.0/bin/python3.7 /usr/bin/python3.7
 	创建pip软链接
 	ln -s /usr/local/python3.7.0/bin/pip3.7 /usr/bin/pip3.7
-	pip3.7 install --upgrade pip	
-	
+	pip3.7 install --upgrade pip
+
 centos7 python3.7 虚拟环境:
 	1. 安装virtualenv、virtualenvwrapper
 	pip3.7 install -i https://pypi.tuna.tsinghua.edu.cn/simple virtualenv
 	pip3.7 install -i https://pypi.tuna.tsinghua.edu.cn/simple virtualenvwrapper	pip3.7 list
-	
+
 	2.对root用户进行设置。
 	vim ~/.bash_profile		# 在配置文件的末尾我们添加如下配置
 		# VIRTUALENVWRAPPER_PYTHON=/usr/local/python3/bin/python3     # 指定virtualenvwrapper执行的python版本
 		# --no-site-packages											# 表示使用一个只有Python3的环境，而不导入原来Python3中安装模块。
 		export WORKON_HOME=/root/.virtualenvs    					# 指定虚拟环境存放目录，.virtualenvs目录名可自拟
-		source /usr/bin/virtualenvwrapper.sh   whereis virtualenvwrapper.sh 				# virtualenvwrapper.sh所在目录	
+		source /usr/bin/virtualenvwrapper.sh   whereis virtualenvwrapper.sh 				# virtualenvwrapper.sh所在目录
 	source  ~/.bash_profile     # 使文件立即生效
-	
+
 	3.创建虚拟环境
 	mkvirtualenv --no-site-packages --python=/usr/bin/python3.7 env-pyinotify
 		--no-site-packages：		表示使用一个只有Python3的环境，而不导入原来Python3中安装模块。
@@ -70,34 +75,22 @@ centos7 python3.7 虚拟环境:
 	lsvirtualenv 				# 查看有哪些虚拟环境
 	rmvirtualenv env_django_1	# 删除虚拟环境
 	cdvirtualenv				# 进入到虚拟环境所在的目录
-	
 
-	
+
+
 开发环境：
-	pycharm远程连接服务器：
+	pycharm远程连接服务器便捷开发：
 		240	JYcxys@3030	/home/xjj/jcdz
 
-	虚拟环境：
+	创建虚拟环境：
 		mkvirtualenv --no-site-packages --python=/usr/bin/python3.7 env-jcdz
-		
+
 	docker:
-		
+
 	项目依赖：
-		
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+		pip install -i https://pypi.tuna.tsinghua.edu.cn/simple mitmproxy
+		pip install -i https://pypi.tuna.tsinghua.edu.cn/simple requests
+		pip install -i https://pypi.tuna.tsinghua.edu.cn/simple sqlalchemy
+		pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pandas
+		pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pymysql
 	

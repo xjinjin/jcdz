@@ -67,7 +67,8 @@ class classifly:
     def __init__(self):
         self.links = {'login': 'portal/initPortal',
                       'qyxx': 'edf/org/queryAll', 'zhanghu': '/ba/bankAccount/queryList',
-                      'pingzheng': '/v1/gl/docManage/init', 'cunhuo': '/ba/inventory/queryList',
+                      'pingzhenginit': '/v1/gl/docManage/init','pingzhengquery': '/v1/gl/docManage/query',
+                      'cunhuo': '/ba/inventory/queryList',
                       'gongyinshang': '/ba/supplier/queryList', 'kjkm': '/account/query', 'kehu': '/customer/queryList',
                       'bmry': '/v1/ba/person/queryList', 'yeb': '/balancesumrpt/query', 'myip': 'myip.ipip'}
         self.task = {'1': '凭证', '2': '余额表', '3': '企业信息', '4': '会计科目', '5': '部门人员', '6': '客户'
@@ -78,8 +79,8 @@ class classifly:
         while True:
             data = pandas.read_sql("select * from jcdflowsave", engine)
             if len(data.index) == 0:
-                time.sleep(600)  # 睡600秒
-                continue
+                time.sleep(60)  # 睡600秒
+                # continue
             else:
                 for i in data.index.values:  # 获取行号的索引，并对其进行遍历：
                     # 根据i来获取每一行指定的数据 并利用to_dict转成字典
@@ -97,17 +98,17 @@ class classifly:
         except TypeError as e:
             path=row_data['path']
             print(path)
-            with open(file=path,mode='rb')  as folder:
-                result=folder.read()
+            with open(file=path,mode='rb')  as f:
+                result=f.read()
                 flow_response=pickle.loads(result)
         path = row_data['path']
         num = 0
-        for label, link in self.links.items():
+        for label, link in self.links.items():  # 确定此url是否有效    1.入库    2.JCDFLOWSAVE库中删除
             if link in flow_request.url:
                 num += 1
                 result = self.deal_data(flow_request, flow_response, label, path)
                 break
-        if num == 0:
+        if num == 0:        # 说明这条记录是无效的url，直接删除
             try:
                 user = session.query(JCDFLOWSAVE).get(str(id_))
                 session.delete(user)
@@ -117,7 +118,7 @@ class classifly:
         else:
             pass  # 将相关信息在存到另一个数据库中
 
-    def deal_data(self, *args):
+    def deal_data(self, *args):       # 处理需要的数据，有效的url
         '''处理数据'''
         flow_request, flow_response, label, path = args
         print(label)
@@ -127,8 +128,9 @@ class classifly:
             self.qyxx(flow_request, flow_response, label,path)
         elif 'zhanghu' == label:
             self.zhanghu(flow_request, flow_response, label)
-        elif 'pingzheng' == label:
-            self.pingzheng(flow_request, label)
+        elif 'pingzhenginit' == label or 'pingzhengquery' == label:
+            label = 'pingzheng'
+            self.pingzheng(flow_request, flow_response, label, path)
         elif 'cunhuo' == label:  # //
             self.cunhuo(flow_request, flow_response, label)
         elif 'gongyinshang' == label:
@@ -151,7 +153,7 @@ class classifly:
         dicts = dict(data=data, token=token, label=label)
         dicts = self.fetch_data(dicts)
         if self.search_data(dicts):
-            real = self.search_data(dicts)
+            # real = self.search_data(dicts)
             self.update_data(dicts)
         else:
             result = self.add_data(dicts)
@@ -232,43 +234,48 @@ class classifly:
         '''处理余额表信息'''
         pass
 
-    def pingzheng(self, flow_request, label):
+    def pingzheng(self, *args):
         '''处理凭证信息'''
+        flow_request, flow_response, label, path = args
         token = dict(flow_request.headers)['token']
-        headers = dict(flow_request.headers)
-        print(headers)
-        if ':authority' in headers:
-            headers.pop(':authority')
-            headers.pop('cookie')
-        cookies = dict(flow_request.cookies)
-        print(cookies)
-        data = json.dumps({'voucherState': '', 'summary': '', 'accountId': '', 'endCode': '', 'startCode': '',
-                           'displayDate': '2019-10', 'endAmount': '', 'startAmount': '', 'startYear': 2016,
-                           'startPeriod': 1, 'endYear': 2025, 'endPeriod': 12,
-                           'page': {'pageSize': 1000, 'currentPage': 1}, 'userOrderField': '', 'order': ''})
-        resposne = requests.post(url='https://dz.jchl.com/v1/gl/docManage/query', headers=headers, json=data,
-                                 cookies=cookies)
-        print(resposne.text)
-        results = eval(resposne.text)['value']['dtoList']
-        container = {}
-        for i in results:
-            voucherDate = i['voucherDate']
-            if voucherDate not in container:
-                container['{}'.format(voucherDate)] = [i]
-            else:
-                box = container['{}'.format(voucherDate)]
-                box.append(i)
-                container['{}'.format(voucherDate)] = box
-        dicts = dict(box=container, token=token, label=label)
-        dicts = self.fetch_data(dicts)
-        self.pz_data(dicts)
+        # headers = dict(flow_request.headers)
+        # print(headers)
+        # if ':authority' in headers:
+        #     headers.pop(':authority')
+        #     headers.pop('cookie')
+        # cookies = dict(flow_request.cookies)
+        # print(cookies)
+        # voucherState":null,"summary":null,"accountId":null,"endCode":null,"simpleCondition":null,"startCode":null,
+        # "displayDate":"2019-12","endAmount":null,"startAmount":null,"startYear":2019,"startPeriod":1,"endYear":2025,"
+        # endPeriod":12,"page":{"pageSize":10,"currentPage":1},"userOrderField":null,"order":null}
+        # data = json.dumps({'voucherState': '', 'summary': '', 'accountId': '', 'endCode': '', 'startCode': '',
+        #                    'displayDate': '2019-10', 'endAmount': '', 'startAmount': '', 'startYear': 2016,
+        #                    'startPeriod': 1, 'endYear': 2025, 'endPeriod': 12,
+        #                    'page': {'pageSize': 1000, 'currentPage': 1}, 'userOrderField': '', 'order': ''})
+        # resposne = requests.post(url='https://dz.jchl.com/v1/gl/docManage/query', headers=headers, json=data,
+        #                          cookies=cookies)
+        # print(resposne.text)
+        results = eval(flow_response.text)['value']['dtoList']
+        if results:
+            container = {}
+            for i in results:   # i 是一行凭证数据，字典形式
+                voucherDate = i['voucherDate']
+                if voucherDate not in container:
+                    container['{}'.format(voucherDate)] = [i]
+                else:
+                    box = container['{}'.format(voucherDate)]
+                    box.append(i)
+                    container['{}'.format(voucherDate)] = box
+            dicts = dict(box=container, token=token, label=label)
+            dicts = self.fetch_data(dicts)      # 字典 补充账套名，电话
+            self.pingzheng_data(dicts)
 
-    def pz_data(self, dicts):
+    def pingzheng_data(self, dicts):
         '''处理凭证数据'''
         box = dicts['box']
         for i in box:
-            kjqj = i
-            infodata = box[kjqj]
+            kjqj = i                # 日期:'2019-11-30'
+            infodata = box[kjqj]    # 每个日期的列表有多个字典凭证
             result = session.query(JCDEXPORT).filter(JCDEXPORT.kjqj == i,
                                                      JCDEXPORT.ztname == dicts['ztname'],
                                                      JCDEXPORT.mobile == dicts['mobile'],
@@ -276,34 +283,35 @@ class classifly:
             if result:
                 session.execute(
                     'update {} set data="{}"  where mobile = "{}" and ztname="{}" and kjqj="{}"'.format(
-                        'jcdexport', infodata, dicts['mobile'], dicts['name'], kjqj))
+                        'jcdexport', infodata, dicts['mobile'], dicts['ztname'], kjqj))
             else:
                 result = JCDEXPORT(mobile=dicts['mobile'], label=dicts['label'], ztname=dicts['ztname'],
                                    data=infodata, kjqj=kjqj)
                 session.add(result)
-            session.close()
+                session.commit()
+            # session.close()
 
     def zhanghu(self, flow_request, flow_response, label):
         '''处理账户信息'''
         token = dict(flow_request.headers)['token']
-        data = eval(flow_response.text)['value']
+        data = eval(flow_response.text)['value']  # dict
         dicts = dict(data=data, token=token, label=label)
         dicts = self.fetch_data(dicts)
         if self.search_data(dicts):
             self.update_data(dicts)
         else:
-            result = self.add_data(dicts)
+            self.add_data(dicts)
 
     def qyxx(self, flow_request, flow_response, label,path):
         '''处理企业信息'''
         token = dict(flow_request.headers)['token']
         data = eval(flow_response.text)['value']
         dicts = dict(data=data, token=token, label=label)
-        dicts = self.fetch_data(dicts)
-        if self.search_data(dicts):
-            self.update_data(dicts)
+        dicts = self.fetch_data(dicts)      # 补：ztname,mobile
+        if self.search_data(dicts):         # 判断数据库中是否有此公司的企业信息
+            self.update_data(dicts)         # 用现在的数据更新数据库
         else:
-            result = self.add_data(dicts)
+            result = self.add_data(dicts)   # 没有则添加
 
     def fetch_data(self, dicts):
         '''获取数据'''
@@ -316,12 +324,12 @@ class classifly:
     def login(self, flow_request, flow_response, label):
         '''解析login'''
         token = dict(flow_request.headers)['token']
-        user = eval(flow_response.text)['value']['user']
+        user = eval(flow_response.text)['value']['user']   # dict
         org = eval(flow_response.text)['value']['org']
         mobile = user['mobile']
         ztname = org['name']
         dicts = dict(token=token, mobile=mobile, label=label, ztname=ztname)
-        if self.search_data(dicts):
+        if self.search_data(dicts):         # 根据token判断此公司是否在JCDZT数据库中    1.pass    2.添加到JCDZT
             pass
         else:
             result = self.add_data(dicts)
@@ -362,27 +370,31 @@ class classifly:
 
     def update_data(self, dicts):
         '''更新数据'''
-        if 'qyxx' in dicts:
+        if 'qyxx' == dicts['label']:
             session.execute(
                 'update {} set data="{}"  where mobile = "{}" and ztname="{}"'.format(
                     'jcdexport', dicts['data'], dicts['mobile'], dicts['ztname']))
-        elif  'cunhuo' in dicts:
+        elif  'zhanghu' == dicts['label']:
             session.execute(
                 'update {} set data="{}"  where mobile = "{}" and ztname="{}"'.format(
                     'jcdexport', dicts['data'], dicts['mobile'], dicts['ztname']))
-        elif 'gongyinshang' in dicts:
+        elif  'cunhuo' == dicts['label']:
             session.execute(
                 'update {} set data="{}"  where mobile = "{}" and ztname="{}"'.format(
                     'jcdexport', dicts['data'], dicts['mobile'], dicts['ztname']))
-        elif 'kjkm' in dicts:
+        elif 'gongyinshang' == dicts['label']:
             session.execute(
                 'update {} set data="{}"  where mobile = "{}" and ztname="{}"'.format(
                     'jcdexport', dicts['data'], dicts['mobile'], dicts['ztname']))
-        elif 'kehu' in dicts:
+        elif 'kjkm' == dicts['label']:
             session.execute(
                 'update {} set data="{}"  where mobile = "{}" and ztname="{}"'.format(
                     'jcdexport', dicts['data'], dicts['mobile'], dicts['ztname']))
-        elif 'bmry' in dicts:
+        elif 'kehu' == dicts['label']:
+            session.execute(
+                'update {} set data="{}"  where mobile = "{}" and ztname="{}"'.format(
+                    'jcdexport', dicts['data'], dicts['mobile'], dicts['ztname']))
+        elif 'bmry' == dicts['label']:
             session.execute(
                 'update {} set data="{}"  where mobile = "{}" and ztname="{}"'.format(
                     'jcdexport', dicts['data'], dicts['mobile'], dicts['ztname']))
