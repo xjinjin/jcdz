@@ -97,6 +97,9 @@ class JCDFLOWSAVE(Base):
     request = Column(LargeBinary())
     response = Column(LargeBinary())
     path = Column(String(100))
+    is_delete = Column(bool)
+
+
 
 
 Base.metadata.create_all(engine) # 创建所有Base派生类所对应的数据表。当启动代理时：此文件当成模块加载这行自动运行。
@@ -112,6 +115,22 @@ import time
 
 
 class Proxy():
+
+    def __init__(self):
+        self.links = ['portal/initPortal',
+                      'edf/org/queryAll',
+                      '/ba/bankAccount/queryList',
+                      # '/v1/gl/docManage/init',
+                      '/v1/gl/docManage/query',
+                      '/ba/inventory/queryList',
+                      '/ba/supplier/queryList',
+                      '/account/query',
+                      '/customer/queryList',
+                      '/v1/ba/person/queryList',
+                      '/balancesumrpt/query',
+                      '/balanceauxrpt/query',
+                      'myip.ipip']
+
     def save_data(self, request, response, now_time):
         '''存flow数据'''
         try:
@@ -175,12 +194,16 @@ class Proxy():
 
     def response(self, flow: mitmproxy.http.HTTPFlow):
         '''拦截响应数据'''
-        request = flow.request
-        response = flow.response
-        now_time = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime(time.time())) # 2019_12_25_10_12_10 str
-        request = pickle.dumps(request)         # 以字节对象形式返回封装的对象
-        response = pickle.dumps(response)
-        self.save_data(request, response, now_time)
+        for l in self.links:
+            if '/account/queryCalcUsage' in flow.request.url:  # 解决/account/query、/account/queryCalcUsage 相似问题
+                pass
+            elif l in flow.request.url:
+                request = flow.request
+                response = flow.response
+                now_time = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime(time.time())) # 2019_12_25_10_12_10 str
+                request = pickle.dumps(request)         # 以字节对象形式返回封装的对象
+                response = pickle.dumps(response)
+                self.save_data(request, response, now_time)
         # flow_res = str(pickle.dumps(flow))
         # print(flow_res,'flow_res')
 

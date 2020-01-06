@@ -4,71 +4,18 @@ import pickle
 import time
 
 import pandas
-import requests
-from sqlalchemy import create_engine, Column, Integer, String, LargeBinary
-from sqlalchemy.dialects.mysql import LONGTEXT
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+
+from db_parse import engine,session,JCDZT,JCDEXPORT,JCDFLOWSAVE
 
 null = ''
 true = ''
 false = ''
-SURL = "mysql+pymysql://cic_admin:TaBoq,,1234@192.168.1.170:3306/cicjust_splinter?charset=utf8&autocommit=true"
-engine = create_engine(SURL)  # 定义引擎
-Base = declarative_base()
-session = sessionmaker(engine)()
-
-
-class JCDZT(Base):
-    __tablename__ = 'jcdzt'
-    id = Column(Integer, primary_key=True)
-    mobile = Column(String(40))
-    ztname = Column(String(40))
-    token = Column(String(1000))
-    start = Column(String(30))
-    finshed = Column(String(30))
-    status = Column(String(40))
-
-
-class JCDEXPORT(Base):
-    __tablename__ = 'jcdexport'
-    id = Column(Integer, primary_key=True)
-    mobile = Column(String(20))
-    label = Column(String(20))
-    ztname = Column(String(20))
-    data = Column(LONGTEXT)
-    kjqj = Column(String(20))
-
-
-class JCDFLOWSAVE(Base):
-    __tablename__ = 'jcdflowsave'
-    id = Column(Integer, primary_key=True)
-    now_time = Column(String(40))
-    request = Column(LargeBinary())
-    response = Column(LargeBinary())
-
-
-Base.metadata.create_all(engine)
-
-null = ''
-true = ''
-false = ''
-SURL = "mysql+pymysql://cic_admin:TaBoq,,1234@192.168.1.170:3306/cicjust_splinter?charset=utf8&autocommit=true"
-engine = create_engine(SURL)  # 定义引擎
-Base = declarative_base()
-session = sessionmaker(engine)()
-
-
-# request=row_data['request']
-# res=pickle.loads(request)
-
 
 class classifly:
     def __init__(self):
         self.links = {'login': 'portal/initPortal',
                       'qyxx': 'edf/org/queryAll',
                       'zhanghu': '/ba/bankAccount/queryList',
-                      # 'pingzhenginit': '/v1/gl/docManage/init',
                       'pingzheng': '/v1/gl/docManage/query',
                       'cunhuo': '/ba/inventory/queryList',
                       'gongyinshang': '/ba/supplier/queryList',
@@ -84,53 +31,33 @@ class classifly:
     def fetch_sql(self):
         '''从数据库里取数据'''
         while True:
-            data = pandas.read_sql("select * from jcdflowsave", engine)
+            data = pandas.read_sql("select * from jcdflowsave where status = 0", engine)
             if len(data.index) == 0:
                 time.sleep(10)  # 睡600秒
-                # continue
             else:
                 for i in data.index.values:  # 获取行号的索引，并对其进行遍历：
                     # 根据i来获取每一行指定的数据 并利用to_dict转成字典
                     row_data = data.loc[i, ['id', 'now_time', 'request', 'response', 'path']].to_dict()
                     print(row_data['id'])
-                    session.query(JCDFLOWSAVE).filter(JCDFLOWSAVE.id == int(row_data['id'])).delete()
+                    session.query(JCDFLOWSAVE).filter(JCDFLOWSAVE.id == int(row_data['id'])).update({'status': 1})
                     session.commit()
                     self.databag(row_data)
-                # results = session.query(JCDFLOWSAVE).all()
-                # # session.query(JCDFLOWSAVE).filter(JCDFLOWSAVE.id == int(row_data['id'])).delete()
-                # session.delete(results)
-                # session.commit()
 
     def databag(self, row_data):
         '''处理url'''
-        id_ = row_data['id']
-        # print(id_)
-        # now_time = row_data['now_time']
         flow_request = pickle.loads(row_data['request'])
         try:
             flow_response = pickle.loads(row_data['response'])
         except TypeError as e:
             path=row_data['path']
-            # print(path)
             with open(file=path,mode='rb')  as f:
                 result=f.read()
                 flow_response=pickle.loads(result)
         path = row_data['path']
-        num = 0
-        for label, link in self.links.items():  # 确定此url是否有效    1.入库    2.JCDFLOWSAVE库中删除
+        for label, link in self.links.items():
             if link in flow_request.url:
-                num += 1
                 self.deal_data(flow_request, flow_response, label, path)
                 break
-        if num == 0:        # 说明这条记录是无效的url，直接删除
-            try:
-                user = session.query(JCDFLOWSAVE).get(str(id_))
-                session.delete(user)
-                session.commit()
-            except Exception as e:
-                print(id_, 'error')
-        else:
-            pass  # 将相关信息在存到另一个数据库中
 
     def deal_data(self, *args):       # 处理需要的数据，有效的url
         '''处理数据'''

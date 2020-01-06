@@ -35,8 +35,11 @@ class Events:
         if '/balancesumrpt/query' in flow.request.url:
             print('####################################')
             data = eval(flow.response.text)['value']
-            print(type(data))
             print(data)
+            print(type(eval(flow.response.text)))
+            print(type(data))
+
+
             print('####################################')
 
 
