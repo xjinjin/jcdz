@@ -5,7 +5,7 @@ import time
 
 import pandas
 
-from db_parse import engine,session,JCDZT,JCDEXPORT,JCDFLOWSAVE
+from parse.db_parse import engine,session,JCDZT,JCDEXPORT,JCDFLOWSAVE
 
 null = ''
 true = ''

@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from db_proxy import JCDFLOWSAVE,session
+from proxy.db_proxy import JCDFLOWSAVE,session
 
 import pickle
 import time
 
-import mitmproxy.addonmanager
-import mitmproxy.connections
 import mitmproxy.http
-import mitmproxy.log
-import mitmproxy.proxy.protocol
-import mitmproxy.tcp
 import mitmproxy.websocket
 
 
