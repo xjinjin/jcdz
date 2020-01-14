@@ -6,7 +6,7 @@ jcdz开发文档
 	
 	mitmdump -s main_classifly.py -p 8081   # 默认8080
 	https://dz.jchl.com/#/edfx-app-root/edfx-app-portal/app-proof-of-charge
-	账号：18678815828密码：Aa111111
+	账号：密码：
 
 简介：客户的数据从其他服务商导入到我们的总账系统。使用mitm正向代理模式。打包成docker
 	token:每个公司一个token，有时效性
