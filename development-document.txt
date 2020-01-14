@@ -4,18 +4,32 @@ jcdz开发文档
 资料：
 	192.168.1.240 /home/program/jcdz
 	
-	mitmdump.exe -s main_classifly.py -p 8081   # 默认8080
+	mitmdump -s main_classifly.py -p 8081   # 默认8080
+	https://dz.jchl.com/#/edfx-app-root/edfx-app-portal/app-proof-of-charge
+	账号：18678815828密码：Aa111111
 
 简介：客户的数据从其他服务商导入到我们的总账系统。使用mitm正向代理模式。打包成docker
 	token:每个公司一个token，有时效性
+
 	数据库：
 		JCDFLOWSAVE:代理使用的库，所有的数据都入库
-		JCDZT：登陆时的库
-		JCDEXPORT：最终给阮工的数据库，各种要求的数据都存入这个库，根据标签区分不同的数据
+		JCDZT：		登陆时的库
+		JCDEXPORT：	最终给阮工的数据库，各种要求的数据都存入这个库，根据标签区分不同的数据
+		infoname	给阮工注释用的，把有效的的操作和url的映射关系注释一下
 
-启动：
-	mitmdump -s main_classifly.py  启动代理所有的request,response入库，单独一个程序。
-	python parse_data.py		   从数据库中读，解析数据
+	修改数据库的文件：
+	/jcdz/parse/parse_data_v1.py
+	/jcdz/proxy/db_proxy.py
+
+	存放数据库中放不下的response：
+	response
+
+	wy目录：
+	接手前的项目代码
+
+启动：两个进程
+	mitmdump -s proxy/proxy_v1.py -p 8082  启动代理所有的request,response入库，单独一个程序。
+	python parse/parse_data_v1.py		   从数据库中读，解析数据
 
 git：本地连接到远程
 	git init
@@ -28,7 +42,7 @@ git：本地连接到远程
 	特殊文件：
 	.gitignore  .idea/	.git/
 	readme.txt
-	requirements.txt		pip3.7 freeze > requirements.txt
+	requirements.txt		pip freeze > requirements.txt
 
 CentOS7 安装Python3.7多版本共存
 	1、安装依赖包
@@ -93,4 +107,3 @@ centos7 python3.7 虚拟环境:
 		pip install -i https://pypi.tuna.tsinghua.edu.cn/simple sqlalchemy
 		pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pandas
 		pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pymysql
-	
