@@ -4,7 +4,7 @@ import pickle
 
 import requests
 
-from sqlalchemy import create_engine, Column, Integer, String, LargeBinary
+from sqlalchemy import create_engine, Column, Integer, String, LargeBinary,Boolean
 from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -97,7 +97,7 @@ class JCDFLOWSAVE(Base):
     request = Column(LargeBinary())
     response = Column(LargeBinary())
     path = Column(String(100))
-    is_delete = Column(bool)
+    status = Column(Boolean)
 
 
 

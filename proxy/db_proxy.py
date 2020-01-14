@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+'''修改数据库结构'''
 
 from sqlalchemy import create_engine, Column, Integer, String, LargeBinary,Boolean
 from sqlalchemy.dialects.mysql import LONGTEXT
@@ -19,5 +20,5 @@ class JCDFLOWSAVE(Base):
     path = Column(String(100))
     status = Column(Boolean)
 
-# Base.metadata.drop_all(engine)
+Base.metadata.drop_all(engine)
 Base.metadata.create_all(engine) # 创建所有Base派生类所对应的数据表。
