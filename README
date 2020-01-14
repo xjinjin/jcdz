@@ -6,7 +6,7 @@ jcdz开发文档
 	
 	mitmdump -s main_classifly.py -p 8081   # 默认8080
 	https://dz.jchl.com/#/edfx-app-root/edfx-app-portal/app-proof-of-charge
-	账号：18678815828密码：Aa111111
+	账号：xxx密码：xxx
 
 简介：客户的数据从其他服务商导入到我们的总账系统。使用mitm正向代理模式。打包成docker
 	token:每个公司一个token，有时效性
@@ -37,6 +37,14 @@ git：本地连接到远程
 	git commit -m "first commit"
 	git remote add origin git@github.com:xjinjin/jcdz.git
 	git push -u origin master/git push
+
+	githup上创建proxy、parse分支。分别做成docker
+	git add -A
+	git commit -m "nothing"
+	git pull
+	git checkout -b proxy origin/proxy
+	git checkout -b proxy origin/parse
+
 
 
 	特殊文件：
@@ -100,6 +108,7 @@ centos7 python3.7 虚拟环境:
 		mkvirtualenv --no-site-packages --python=/usr/bin/python3.7 env-jcdz
 
 	docker:
+		docker run --name jcdz_proxy_v1  -p 8082:8080  -d daocloud.io/xjinjin/yct_proxy_config:dev-88253ae
 
 	项目依赖：
 		pip install -i https://pypi.tuna.tsinghua.edu.cn/simple mitmproxy
